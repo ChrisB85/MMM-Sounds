@@ -84,11 +84,16 @@ module.exports = NodeHelper.create({
                 return;
             }
 
-            this.log('Playing ' + filename + ' with ' + delay + 'ms delay', true);
+            this.log('Playing ' + path.normalize(__dirname + '/sounds/' + filename) + ' with ' + delay + 'ms delay', true);
 
+            try {
             setTimeout(() => {
-                new Player(path.normalize(__dirname + '/sounds/' + filename)).play();
-            }, delay);
+                    new Player(path.normalize(__dirname + '/sounds/' + filename)).play();
+                }, delay);
+                this.log('Sound played successfully');
+            } catch (e) {
+                this.log('Error playing sound: ' + e);
+            }
         } else {
             this.log('Not playing sound as quiet hours are in effect');
         }
