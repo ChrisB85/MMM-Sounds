@@ -39,5 +39,13 @@ Module.register('MMM-Sounds', {
             }
             this.sendSocketNotification(notification, payload);
         }
+    },
+
+    /**
+     * SOUND_STARTED / SOUND_FINISHED from the helper, payload is the file name.
+     * MMM-VoiceEye lights up on them while the mirror speaks.
+     */
+    socketNotificationReceived: function(notification, payload) {
+        this.sendNotification(notification, payload);
     }
 });

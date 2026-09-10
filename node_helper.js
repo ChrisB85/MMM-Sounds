@@ -88,7 +88,12 @@ module.exports = NodeHelper.create({
 
             try {
             setTimeout(() => {
-                    new Player(path.normalize(__dirname + '/sounds/' + filename)).play();
+                    const player = new Player(path.normalize(__dirname + '/sounds/' + filename));
+                    player.play();
+                    this.sendSocketNotification('SOUND_STARTED', filename);
+                    // 'exit', not node-aplay's 'complete': a killed aplay emits no
+                    // 'complete' and listeners would wait for it forever.
+                    player.process.on('exit', () => this.sendSocketNotification('SOUND_FINISHED', filename));
                 }, delay);
                 this.log('Sound played successfully');
             } catch (e) {

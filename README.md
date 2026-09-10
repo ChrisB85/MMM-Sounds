@@ -119,6 +119,11 @@ or also specifying a delay:
 this.sendNotification('PLAY_SOUND', {sound: 'wobble.wav', delay: 1000}); // 1 second delay
 ```
 
+When playback starts and when `aplay` exits, the module broadcasts
+`SOUND_STARTED` and `SOUND_FINISHED` with the file name as payload
+(e.g. `'tts/<md5>.wav'`). Skipped sounds (quiet hours, voice assistant busy)
+emit neither.
+
 
 ## Included sounds
 
