@@ -15,6 +15,8 @@ Module.register('MMM-Sounds', {
      * Module Start
      */
     start: function() {
+        // Set from MMM-VoiceEye; the mirror keeps quiet while the voice assistant talks.
+        this.voiceBusy = false;
         this.sendSocketNotification('CONFIG', this.config);
         Log.info('Starting module: ' + this.name);
     },
@@ -26,7 +28,15 @@ Module.register('MMM-Sounds', {
      * @param {*}      payload
      */
     notificationReceived: function(notification, payload) {
-        if (notification === 'PLAY_SOUND') {
+        if (notification === 'VOICE_ASSISTANT_STATE') {
+            this.voiceBusy = payload !== 'idle';
+        } else if (notification === 'PLAY_SOUND') {
+            // Every mirror sound ends up here, TTS included, so one check covers
+            // all sources - checked at play time, after any TTS download delay.
+            if (this.voiceBusy) {
+                Log.info(this.name + ': voice assistant busy, skipping ' + JSON.stringify(payload));
+                return;
+            }
             this.sendSocketNotification(notification, payload);
         }
     }
