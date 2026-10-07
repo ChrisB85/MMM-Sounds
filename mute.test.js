@@ -26,12 +26,26 @@ for (const state of ["wake", "listening", "thinking", "speaking"]) {
   sent.length = 0;
   mod.notificationReceived("VOICE_ASSISTANT_STATE", state);
   mod.notificationReceived("PLAY_SOUND", "tts/greeting.wav");
-  assert.strictEqual(sent.length, 0, "no sound in state " + state);
+  assert.ok(!sent.some(([n]) => n === "PLAY_SOUND"), "no sound in state " + state);
 }
 
 // --- 3. back to idle, sounds play again ---
 mod.notificationReceived("VOICE_ASSISTANT_STATE", "idle");
 mod.notificationReceived("PLAY_SOUND", "cuckoo-clock.wav");
 assert.deepStrictEqual(sent, [["PLAY_SOUND", "cuckoo-clock.wav"]], "sound returns after the conversation");
+
+// --- 4. a sound already playing when the conversation starts is stopped ---
+// The greeting can start a moment before the wake word; left playing, the
+// satellite's microphone hears it as part of the user's request.
+sent.length = 0;
+mod.notificationReceived("VOICE_ASSISTANT_STATE", "wake");
+assert.deepStrictEqual(sent, [["STOP_SOUND", null]], "conversation start stops the playing sound");
+sent.length = 0;
+mod.notificationReceived("VOICE_ASSISTANT_STATE", "listening");
+mod.notificationReceived("VOICE_ASSISTANT_STATE", "speaking");
+assert.strictEqual(sent.length, 0, "only the idle -> busy edge stops sounds");
+mod.notificationReceived("VOICE_ASSISTANT_STATE", "idle");
+mod.notificationReceived("VOICE_ASSISTANT_STATE", "wake");
+assert.deepStrictEqual(sent, [["STOP_SOUND", null]], "the next conversation stops sounds again");
 
 console.log("mute.test.js OK");

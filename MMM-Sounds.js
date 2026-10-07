@@ -29,7 +29,13 @@ Module.register('MMM-Sounds', {
      */
     notificationReceived: function(notification, payload) {
         if (notification === 'VOICE_ASSISTANT_STATE') {
-            this.voiceBusy = payload !== 'idle';
+            const busy = payload !== 'idle';
+            // A sound started just before the wake word (a face greeting) would
+            // otherwise reach the satellite's microphone - stop it on the way in.
+            if (busy && !this.voiceBusy) {
+                this.sendSocketNotification('STOP_SOUND', null);
+            }
+            this.voiceBusy = busy;
         } else if (notification === 'PLAY_SOUND') {
             // Every mirror sound ends up here, TTS included, so one check covers
             // all sources - checked at play time, after any TTS download delay.

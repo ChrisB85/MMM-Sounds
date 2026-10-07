@@ -8,6 +8,8 @@ const moment     = require('moment');
 
 module.exports = NodeHelper.create({
     isLoaded: false,
+    // aplay processes still running, so STOP_SOUND can cut them off.
+    players:  new Set(),
     config:   null,
 
     /**
@@ -24,6 +26,9 @@ module.exports = NodeHelper.create({
                     this.playFile(this.config.startupSound);
                 }
             }
+        } else if (notification === 'STOP_SOUND') {
+            this.log('Voice assistant woke, stopping ' + this.players.size + ' sound(s)');
+            this.players.forEach(player => player.process.kill('SIGTERM'));
         } else if (notification === 'PLAY_SOUND') {
             if (typeof payload === 'string') {
                 this.playFile(payload);
@@ -93,7 +98,11 @@ module.exports = NodeHelper.create({
                     this.sendSocketNotification('SOUND_STARTED', filename);
                     // 'exit', not node-aplay's 'complete': a killed aplay emits no
                     // 'complete' and listeners would wait for it forever.
-                    player.process.on('exit', () => this.sendSocketNotification('SOUND_FINISHED', filename));
+                    this.players.add(player);
+                    player.process.on('exit', () => {
+                        this.players.delete(player);
+                        this.sendSocketNotification('SOUND_FINISHED', filename);
+                    });
                 }, delay);
                 this.log('Sound played successfully');
             } catch (e) {
